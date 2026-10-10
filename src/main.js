@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261008-focused-dv-flow';
+import Start from './scenes/Start.js?v=20261009-feasibility-wording';
 
 console.log('START IMPORTED:', Start);
 
