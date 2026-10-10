@@ -2693,7 +2693,7 @@ export default class Start extends Phaser.Scene {
         this.enterRecordedScreen('showRedistributionFeasibility');
         this.clearQuestionScreen();
         this.addQuestionObject(this.add.rectangle(640, 360, 1120, 600, 16777215).setStrokeStyle(3, 0));
-        this.addQuestionObject(this.add.text(640, 200, 'Could the food be distributed so everyone has at least 10 pieces?', {fontSize: '29px', color: '#000000', align: 'center', wordWrap: {width: 960}}).setOrigin(0.5));
+        this.addQuestionObject(this.add.text(640, 200, 'If the group redistributed the food it collected, do you think there would be enough for everyone?', {fontSize: '29px', color: '#000000', align: 'center', wordWrap: {width: 960}}).setOrigin(0.5));
         const answers = ['Yes', 'No'];
         if (Phaser.Math.Between(0, 1) === 1) answers.reverse();
         answers.forEach((label,i) => this.createAnswerButton(640, 350+i*90, label, 'redistributionFeasibility'));
