@@ -27,9 +27,6 @@ export default class Start extends Phaser.Scene {
             screenOrientation: window.innerHeight > window.innerWidth ? 'portrait' : 'landscape',
             survivalCheck: null,
             totalFoodEstimate: null,
-            perCapitaEstimate: null,
-            equalDivisionOutcomeChoice: null,
-            equalDivisionOutcomePassed: null,
             totalFoodCountIndividualMoves: 0,
             totalFoodCountPersonDumps: 0,
             equalDivisionIndividualMoves: 0,
@@ -1118,7 +1115,9 @@ export default class Start extends Phaser.Scene {
             this.equalDivisionBlanket.disableInteractive();
             this.equalDivisionBlanket.setFillStyle(13097451);
             this.equalDivisionBlanketLabel.setText('Food divided equally');
-            this.equalDivisionInstructionText.setText(`The food has been divided equally. \n \n Each person now has ${ equalShare } pieces.`);
+            const equalDivisionSurvivors = Object.values(this.equalDivisionCounts)
+                .filter(count => count >= 10).length;
+            this.equalDivisionInstructionText.setText(`The food has been divided equally. \n \n ${equalDivisionSurvivors} of 3 people now have at least 10 pieces.`);
             roleLabels.forEach(role => {
                 const basket = basketPositions[role];
                 const countLabel = this.add.text(
@@ -1153,26 +1152,6 @@ export default class Start extends Phaser.Scene {
             this.equalDivisionFoods.push(food);
             this.addQuestionObject(food);
         }
-    }
-    showPerCapitaQuestion() {
-        this.enterRecordedScreen('showPerCapitaQuestion');
-        this.clearQuestionScreen();
-        this.addQuestionObject(this.add.rectangle(640, 360, 900, 450, 16777215)).setStrokeStyle(4, 0);
-        this.addQuestionObject(this.add.text(230, 170, 'After dividing the food equally, how many people had at least 10 pieces?', {
-            fontSize: '28px',
-            color: '#000000',
-            align: 'center',
-            wordWrap: { width: 820 }
-        }));
-        const answers = [
-            '0 people',
-            '2 people',
-            '3 people'
-        ];
-        if (Phaser.Math.Between(0, 1) === 1) answers.reverse();
-        answers.forEach((label, index) => this.createAnswerButton(640, 365 + index * 80, label, 'equalDivisionOutcomeChoice'));
-
-        ;
     }
     showGroupDistributionPreferenceQuestion() {
         this.enterRecordedScreen('showGroupDistributionPreferenceQuestion');
@@ -1383,7 +1362,9 @@ export default class Start extends Phaser.Scene {
             redistributionButton.disableInteractive();
             redistributionButton.setVisible(false);
             redistributionButtonText.setVisible(false);
-            this.partialRedistributionInstructionText.setText('Food above the survival threshold has been redistributed. \n \n The greatest possible number of people now have at least 10 pieces.');
+            const partialRedistributionSurvivors = Object.values(this.partialRedistributionCounts)
+                .filter(count => count >= 10).length;
+            this.partialRedistributionInstructionText.setText(`Food above the survival threshold has been redistributed. \n \n ${partialRedistributionSurvivors} of 3 people now have at least 10 pieces—the most possible.`);
             roleLabels.forEach(personLabel => {
                 const basket = basketPositions[personLabel];
                 const count = this.partialRedistributionCounts[personLabel];
@@ -1617,7 +1598,7 @@ export default class Start extends Phaser.Scene {
         this.enterRecordedScreen('showSocialContractQuestion');
         this.clearQuestionScreen();
         this.addQuestionObject(this.add.rectangle(640, 360, 1120, 500, 16777215)).setStrokeStyle(4, 0);
-        this.addQuestionObject(this.add.text(640, 235, 'Should the group guarantee that everyone will always have enough food to survive, or not?', {
+        this.addQuestionObject(this.add.text(640, 235, 'Should the group guarantee that everyone has enough food to survive, or not?', {
             fontSize: '27px',
             color: '#000000',
             align: 'center',
@@ -1625,8 +1606,8 @@ export default class Start extends Phaser.Scene {
             lineSpacing: 6
         }).setOrigin(0.5));
         const answers = Phaser.Utils.Array.Shuffle([
-            'The group should guarantee that everyone will always have enough food to survive.',
-            'The group should not guarantee that everyone will always have enough food to survive.'
+            'The group should guarantee that everyone has enough food to survive.',
+            'The group should not guarantee that everyone has enough food to survive.'
         ]);
         this.createAnswerButton(640, 410, answers[0], 'socialContractGuarantee');
         this.createAnswerButton(640, 535, answers[1], 'socialContractGuarantee');
@@ -2388,8 +2369,6 @@ export default class Start extends Phaser.Scene {
                 freeAllocationTotalMoved: this.gameData.freeAllocationTotalMoved,
                 freeAllocationDurationMs: this.gameData.freeAllocationDurationMs,
                 redistributionFeasibility: this.gameData.redistributionFeasibility,
-                equalDivisionOutcomeChoice: this.gameData.equalDivisionOutcomeChoice,
-                equalDivisionOutcomePassed: this.gameData.equalDivisionOutcomePassed,
                 manipulationCheckChoice: this.gameData.manipulationCheckChoice,
                 manipulationCheckPassed: this.gameData.manipulationCheckPassed,
                 condition: this.gameData.condition,
