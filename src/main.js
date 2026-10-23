@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261021-sufficiency-feasibility-labels';
+import Start from './scenes/Start.js?v=20261023-tree-limbs2';
 
 console.log('START IMPORTED:', Start);
 

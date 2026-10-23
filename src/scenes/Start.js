@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v16',
+            gameVersion: 'sufficiency_english_gini_8_piece_v20',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -148,7 +148,7 @@ export default class Start extends Phaser.Scene {
             'The people have been hunting and gathering food in order to survive. \n \nIf a person does not eat at least 8 pieces of food a day, he will not survive. \n \nIf a person collects more than 8 pieces of food a day, he can save the remainder for himself the next day.',
             'This location usually has just enough natural resources to provide food for the group.',
             'Person A usually collects the least pieces of food per day. \n \nPerson B usually collects more than Person A but less than Person C. \n \nPerson C usually collects the most pieces of food per day.',
-            'You will make decisions about how the group distributes its food. Choose what you think is best for the group. Consider only the food shown.'
+            'You will make decisions about how the group distributes its food. Choose what you think is best for the group. Consider only the food shown. \n \nThe baskets show what each person collected today, before any sharing. If the group adopts a redistribution rule, everyone must follow it.'
         ];
         this.showInstructionScreen();
     }
@@ -270,12 +270,37 @@ export default class Start extends Phaser.Scene {
             return allocation;
         }
         /*
-     * Divide the required transfer among donors in
-     * proportion to each donor's initial surplus above
-     * the survival threshold.
-     */
+         * Give larger surpluses a higher contribution rate. Recalculate
+         * the rate when a donor reaches the cap at their full surplus.
+         */
+        const exactContributions = new Map();
+        let unassignedTransfer = totalTransferRequired;
+        let uncappedDonors = [...donors];
+        while (uncappedDonors.length > 0) {
+            const totalWeight = uncappedDonors.reduce(
+                (sum, donor) => sum + donor.surplus ** 2, 0
+            );
+            const rate = unassignedTransfer / totalWeight;
+            const cappedDonors = uncappedDonors.filter(
+                donor => rate * donor.surplus ** 2 >= donor.surplus
+            );
+            if (cappedDonors.length === 0) {
+                uncappedDonors.forEach(donor => {
+                    exactContributions.set(donor.index, rate * donor.surplus ** 2);
+                });
+                break;
+            }
+            const cappedIndexes = new Set(cappedDonors.map(donor => donor.index));
+            cappedDonors.forEach(donor => {
+                exactContributions.set(donor.index, donor.surplus);
+                unassignedTransfer -= donor.surplus;
+            });
+            uncappedDonors = uncappedDonors.filter(
+                donor => !cappedIndexes.has(donor.index)
+            );
+        }
         const contributionShares = donors.map(donor => {
-            const exactContribution = donor.surplus / totalAvailableSurplus * totalTransferRequired;
+            const exactContribution = exactContributions.get(donor.index);
             const baseContribution = Math.floor(exactContribution);
             return {
                 ...donor,
@@ -516,8 +541,8 @@ export default class Start extends Phaser.Scene {
         // Exposed limbs and separate foliage clusters keep this between the
         // bare insufficiency tree and the fuller abundance tree.
         [
-            [1038, 330, 145, 10, 33],
-            [1132, 330, 148, 10, -30],
+            [1038, 330, 115, 10, 40],
+            [1132, 330, 125, 10, -30],
             [1062, 280, 110, 7, 67],
             [1108, 280, 110, 7, -67]
         ].forEach(([x, y, width, height, angle]) => {
