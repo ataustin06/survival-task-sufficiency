@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -2222,10 +2222,17 @@ export default class Start extends Phaser.Scene {
             fontSize: '20px',
             color: '#000000',
             align: 'center',
-            wordWrap: { width: 1120 }
+            wordWrap: { width: this.phonePortrait ? 620 : 1120 }
         }).setOrigin(0.5, 0));
+        this.selfInterestThresholdCountText = this.add.text(640, this.phonePortrait ? 112 : 99, '', {
+            fontSize: '19px',
+            color: '#333333',
+            align: 'center',
+            wordWrap: { width: this.phonePortrait ? 620 : 1050 }
+        }).setOrigin(0.5, 0);
+        this.addQuestionObject(this.selfInterestThresholdCountText);
         const statusLine = revealRole ? `Imagine you are ${ revealRole } (outlined in green).` : '';
-        this.addQuestionObject(this.add.text(640, 125, statusLine, {
+        this.addQuestionObject(this.add.text(640, this.phonePortrait ? 147 : 125, statusLine, {
             fontSize: '24px',
             color: revealRole ? '#1b6f3a' : '#555555',
             align: 'center',
@@ -2258,7 +2265,7 @@ export default class Start extends Phaser.Scene {
         this.selfInterestCountTexts = {};
         roles.forEach(role => {
             if (role.label === revealRole) {
-                const outline = this.add.rectangle(role.x, 350, 270, 390, 16777215, 0);
+                const outline = this.add.rectangle(role.x, 350, 270, this.phonePortrait ? 320 : 390, 16777215, 0);
                 outline.setStrokeStyle(6, 1797946);
                 this.addQuestionObject(outline);
             }
@@ -2500,6 +2507,8 @@ export default class Start extends Phaser.Scene {
             const amount = this.selfInterestCounts[roleLabel];
             this.selfInterestCountTexts[roleLabel].setText(`${ amount } ${ amount === 1 ? 'piece' : 'pieces' }`);
         });
+        const atThreshold = Object.values(this.selfInterestCounts).filter(amount => amount >= 8).length;
+        this.selfInterestThresholdCountText.setText(`${atThreshold} of 3 have at least 8 pieces.`);
     }
     applySelfInterestAllocation(allocation, source) {
         this.clearSelfInterestFoodSelection();
@@ -2630,69 +2639,142 @@ export default class Start extends Phaser.Scene {
         });
         return Number((absoluteDifferenceSum / (2 * values.length * total)).toFixed(4));
     }
+    buildQualtricsBackupSummary() {
+        const essential = [
+            'gameId', 'qualtricsId', 'condition', 'gameVersion', 'gameStartTime', 'gameEndTime',
+            'totalDurationMs', 'submissionId', 'saveStatus', 'saveAcknowledged', 'saveConfirmationSource',
+            'sessionBackupStored', 'thresholdCheckChoice', 'thresholdCheckPassed', 'survivalCheck',
+            'redistributionFeasibility', 'manipulationCheckChoice', 'manipulationCheckPassed',
+            'equalGroupInterestChoice', 'partialGroupInterestChoice', 'groupDistributionPreference',
+            'partialRedistributionPreference', 'socialContractGuarantee', 'personalVsGroupResponsibility',
+            'fairRuleChoice', 'foodPriorityChoice', 'workBreakChoice', 'floodPreparationChoice',
+            'personDShareChoice', 'personDEmpathyChoice', 'cooperationCompetitionChoice',
+            'respondentDecile', 'respondentRole', 'respondentRoleRevealed', 'selfInterestRoleAssignmentSource',
+            'selfInterestCondition', 'selfInterestConditionIssue', 'freeAllocationFinal', 'freeAllocationGini', 'freeAllocationSurvivors',
+            'freeAllocationTotalMoved', 'freeAllocationDurationMs', 'equalDivisionFinal',
+            'equalDivisionOutcomeChoice', 'equalDivisionOutcomePassed', 'partialRedistributionFinal',
+            'partialRedistributionSurvivors', 'selfInterestAllocationFinal', 'selfInterestAllocationSurvivors',
+            'selfInterestAllocationGini', 'selfInterestAllocationClassification', 'selfInterestAllocationMethod',
+            'selfInterestAllocationTotalMoved', 'selfInterestOwnStartingFood', 'selfInterestOwnFinalFood',
+            'selfInterestOwnChange', 'selfInterestEqualButtonUsed', 'selfInterestPartialButtonUsed',
+            'redistributionTaskOrder', 'redistributionBlocksCompleted',
+            'economicPrincipleOrder'
+        ];
+        const optional = ['answerChoiceOrders', 'screenTimings', 'answerChoiceOrderHistory'];
+        const summary = {};
+        const omitted = [];
+        for (const key of essential.concat(optional)) {
+            if (this.gameData[key] === undefined) continue;
+            summary[key] = this.gameData[key];
+            if (new Blob([JSON.stringify(summary)]).size > 19000) {
+                delete summary[key];
+                omitted.push(key);
+            }
+        }
+        if (omitted.length) summary.backupOmitted = omitted;
+        return summary;
+    }
     notifyQualtricsComplete(saveStatus) {
-        if (!this.qualtricsParentOrigin) {
-            console.warn('Qualtrics completion message was not sent because parentOrigin is missing or invalid.');
+        if (!this.qualtricsParentOrigin || !window.opener || window.opener.closed) {
+            console.warn('The survey window is unavailable for the task backup message.');
             return false;
         }
-        if (!window.opener || window.opener.closed) {
-            console.warn('Qualtrics completion message was not sent because the survey window is unavailable.');
-            return false;
-        }
-        const completionMessage = {
+        window.opener.postMessage({
             type: 'survival-game-complete',
             gameId: this.gameData.gameId,
             qualtricsId: this.gameData.qualtricsId,
             saveStatus: saveStatus,
-            summary: {
-                screenTimings: this.gameData.screenTimings,
-                answerChoiceOrders: this.gameData.answerChoiceOrders,
-                answerChoiceOrderHistory: this.gameData.answerChoiceOrderHistory,
-                economicPrincipleOrder: this.gameData.economicPrincipleOrder,
-                redistributionTaskOrder: this.gameData.redistributionTaskOrder,
-                redistributionBlocksCompleted: this.gameData.redistributionBlocksCompleted,
-                freeAllocationFinal: this.gameData.freeAllocationFinal,
-                freeAllocationGini: this.gameData.freeAllocationGini,
-                freeAllocationSurvivors: this.gameData.freeAllocationSurvivors,
-                freeAllocationTotalMoved: this.gameData.freeAllocationTotalMoved,
-                freeAllocationDurationMs: this.gameData.freeAllocationDurationMs,
-                redistributionFeasibility: this.gameData.redistributionFeasibility,
-                equalGroupInterestChoice: this.gameData.equalGroupInterestChoice,
-                partialGroupInterestChoice: this.gameData.partialGroupInterestChoice,
-                equalDivisionOutcomeChoice: this.gameData.equalDivisionOutcomeChoice,
-                equalDivisionOutcomePassed: this.gameData.equalDivisionOutcomePassed,
-                thresholdCheckChoice: this.gameData.thresholdCheckChoice,
-                thresholdCheckPassed: this.gameData.thresholdCheckPassed,
-                manipulationCheckChoice: this.gameData.manipulationCheckChoice,
-                manipulationCheckPassed: this.gameData.manipulationCheckPassed,
-                condition: this.gameData.condition,
-                gameVersion: this.gameData.gameVersion,
-                respondentDecile: this.gameData.respondentDecile,
-                respondentRole: this.gameData.respondentRole,
-                selfInterestRoleAssignmentSource: this.gameData.selfInterestRoleAssignmentSource,
-                selfInterestCondition: this.gameData.selfInterestCondition,
-                selfInterestAllocationFinal: this.gameData.selfInterestAllocationFinal,
-                selfInterestOwnChange: this.gameData.selfInterestOwnChange,
-                equalDivisionFinal: this.gameData.equalDivisionFinal,
-                partialRedistributionFinal: this.gameData.partialRedistributionFinal
-            }
-        };
-        window.opener.postMessage(completionMessage, this.qualtricsParentOrigin);
+            summary: this.buildQualtricsBackupSummary()
+        }, this.qualtricsParentOrigin);
         this.gameData.completionMessageSent = true;
-        console.log('Qualtrics completion message sent:', completionMessage);
         return true;
     }
-    saveGameDataToGoogleSheets() {
-        const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzd6bRGpnjN0vrM1ZTUNd640ecyPM-wCAFYojwogNJbUJ-2qlbaqaUica4moWKokAF-/exec';
-        this.gameData.saveStatus = 'attempted';
-        console.log('GOOGLE SCRIPT URL:', googleScriptUrl);
-        console.log('DATA BEING SENT:', JSON.stringify(this.gameData));
-        return fetch(googleScriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            keepalive: true,
-            body: JSON.stringify(this.gameData)
+    createSubmissionId() {
+        let randomPart = '';
+        if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+            const values = new Uint32Array(4);
+            window.crypto.getRandomValues(values);
+            randomPart = Array.from(values, n => n.toString(16).padStart(8, '0')).join('');
+        } else {
+            randomPart = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+        }
+        return `survival_${Date.now()}_${randomPart}`;
+    }
+    checkServerSaveStatus(url, payloadDigest) {
+        return new Promise((resolve, reject) => {
+            const callback = `survivalStatus_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+            const script = document.createElement('script');
+            let settled = false;
+            const finish = (error, saved) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                delete window[callback];
+                script.remove();
+                if (error) reject(error); else resolve(saved);
+            };
+            const timer = setTimeout(() => finish(new Error('Save status timed out.')), 8000);
+            window[callback] = result => {
+                if (!result || result.ok !== true) finish(new Error('Save status was unavailable.'));
+                else finish(null, result.saved === true);
+            };
+            script.onerror = () => finish(new Error('Save status could not be checked.'));
+            const params = new URLSearchParams({
+                action: 'status', callback: callback, submissionId: this.gameData.submissionId,
+                gameId: this.gameData.gameId, qualtricsId: this.gameData.qualtricsId,
+                payloadDigest: payloadDigest
+            });
+            script.src = `${url}?${params.toString()}`;
+            document.head.appendChild(script);
         });
+    }
+    async saveGameDataToGoogleSheets(serializedPayload) {
+        const url = 'https://script.google.com/macros/s/AKfycbzd6bRGpnjN0vrM1ZTUNd640ecyPM-wCAFYojwogNJbUJ-2qlbaqaUica4moWKokAF-/exec';
+        let payloadDigest = null;
+        if (window.crypto && window.crypto.subtle && typeof TextEncoder === 'function') {
+            try {
+                const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(serializedPayload));
+                payloadDigest = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
+            } catch (error) {
+                console.warn('A backup save-status check will not be available:', error);
+            }
+        }
+        let lastError = null;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 15000);
+                let acknowledgement;
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
+                        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                        body: serializedPayload, signal: controller.signal
+                    });
+                    if (!response.ok) throw new Error(`Save server returned ${response.status}.`);
+                    acknowledgement = await response.json();
+                } finally {
+                    clearTimeout(timeout);
+                }
+                if (!acknowledgement || acknowledgement.ok !== true ||
+                    String(acknowledgement.submissionId) !== String(this.gameData.submissionId) ||
+                    String(acknowledgement.gameId) !== String(this.gameData.gameId) ||
+                    String(acknowledgement.qualtricsId) !== String(this.gameData.qualtricsId) ||
+                    String(acknowledgement.condition) !== String(this.gameData.condition) ||
+                    (payloadDigest && acknowledgement.payloadDigest !== payloadDigest)) {
+                    throw new Error('The server did not confirm this submission.');
+                }
+                return 'response';
+            } catch (error) {
+                lastError = error;
+                try {
+                    if (payloadDigest && await this.checkServerSaveStatus(url, payloadDigest)) return 'status';
+                } catch (statusError) {
+                    console.warn('Could not check save status:', statusError);
+                }
+            }
+        }
+        throw lastError || new Error('The task save could not be confirmed.');
     }
     showFinalGameScreen() {
         this.finishScreenTiming();
@@ -2709,7 +2791,10 @@ export default class Start extends Phaser.Scene {
             lineSpacing: 10
         }).setOrigin(0.5);
         this.addQuestionObject(statusText);
+        let closeButtonShown = false;
         const showCloseButton = () => {
+            if (closeButtonShown) return;
+            closeButtonShown = true;
             const closeButton = this.add.rectangle(640, 540, 360, 65, 0);
             closeButton.setInteractive({ useHandCursor: true });
             closeButton.setDepth(50);
@@ -2733,26 +2818,79 @@ export default class Start extends Phaser.Scene {
             closeButton.on('pointerdown', closeGameTab);
             closeText.on('pointerdown', closeGameTab);
         };
-        /*
-     * Report completion immediately. This does not
-     * contain or enforce any minimum-duration rule.
-     */
+        this.gameData.submissionId = this.createSubmissionId();
         this.gameData.saveStatus = 'attempted';
+        this.gameData.saveAcknowledged = false;
+        this.gameData.saveConfirmationSource = null;
+        this.gameData.sessionBackupKey = `survivalTaskBackup:${this.gameData.submissionId}`;
+        this.gameData.sessionBackupStored = false;
+        try {
+            window.sessionStorage.setItem(this.gameData.sessionBackupKey, JSON.stringify(this.gameData));
+            this.gameData.sessionBackupStored = true;
+        } catch (error) {
+            this.gameData.sessionBackupError = String(error);
+        }
         this.notifyQualtricsComplete('attempted');
-        this.saveGameDataToGoogleSheets().then(() => {
-            this.gameData.saveStatus = 'request_sent';
-            this.notifyQualtricsComplete('request_sent');
-            statusText.setText('Your task is complete.\nReturn to the survey to finish.');
-            showCloseButton();
-            console.log('Google Sheets save request sent.');
-        }).catch(error => {
-            this.gameData.saveStatus = 'request_failed';
-            this.notifyQualtricsComplete('request_failed');
-            statusText.setText('We could not finish saving your answers.\nReturn to the survey and notify the researcher.');
-            showCloseButton();
-            console.error('Google Sheets save failed:', error);
-        });
-        console.log('FINAL GAME DATA:', this.gameData);
+        const serializedPayload = JSON.stringify(this.gameData);
+        if (this.gameData.sessionBackupStored) {
+            try { window.sessionStorage.setItem(this.gameData.sessionBackupKey, serializedPayload); }
+            catch (error) { console.warn('Could not refresh the session task backup:', error); }
+        }
+        let saving = false;
+        let retryButton = null;
+        let retryText = null;
+        const runSave = () => {
+            if (saving) return;
+            saving = true;
+            if (retryButton) {
+                retryButton.disableInteractive();
+                retryText.disableInteractive();
+                retryButton.setVisible(false);
+                retryText.setVisible(false);
+            }
+            const retrying = this.gameData.saveStatus !== 'attempted';
+            this.gameData.saveStatus = 'attempted';
+            statusText.setText('Please wait while we save your answers.');
+            if (retrying) this.notifyQualtricsComplete('attempted');
+            this.saveGameDataToGoogleSheets(serializedPayload).then(source => {
+                this.gameData.saveStatus = 'request_sent';
+                this.gameData.saveAcknowledged = true;
+                this.gameData.saveConfirmationSource = source;
+                delete this.gameData.saveError;
+                if (this.gameData.sessionBackupStored) {
+                    try {
+                        window.sessionStorage.removeItem(this.gameData.sessionBackupKey);
+                        this.gameData.sessionBackupStored = false;
+                    } catch (error) {
+                        console.warn('Could not remove the confirmed session backup:', error);
+                    }
+                }
+                this.notifyQualtricsComplete('request_sent');
+                statusText.setText('Your answers have been saved.\nReturn to the survey to finish.');
+                showCloseButton();
+            }).catch(error => {
+                this.gameData.saveStatus = 'request_failed';
+                this.gameData.saveAcknowledged = false;
+                this.gameData.saveError = String(error);
+                this.notifyQualtricsComplete('request_failed');
+                statusText.setText('We could not confirm that your answers were saved.\nPlease try again or notify the researcher.');
+                if (!retryButton) {
+                    retryButton = this.add.rectangle(640, 440, 300, 60, 0).setDepth(50);
+                    retryText = this.add.text(640, 440, 'Try again', {
+                        fontSize: '26px', color: '#ffffff'
+                    }).setOrigin(0.5).setDepth(51);
+                    this.addQuestionObject(retryButton);
+                    this.addQuestionObject(retryText);
+                    retryButton.on('pointerdown', runSave);
+                    retryText.on('pointerdown', runSave);
+                }
+                retryButton.setVisible(true).setInteractive({useHandCursor: true});
+                retryText.setVisible(true).setInteractive({useHandCursor: true});
+                showCloseButton();
+                console.error('Survival task save could not be confirmed:', error);
+            }).finally(() => { saving = false; });
+        };
+        runSave();
     }
     createAnswerButton(centerX, centerY, label, variableName, value = label) {
         this.recordDisplayedAnswer(variableName, value, label);

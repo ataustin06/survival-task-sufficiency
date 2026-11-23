@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-neutral-instructions';
+import Start from './scenes/Start.js?v=20261123-survival-confirmed-save-counter';
 
 console.log('START IMPORTED:', Start);
 
