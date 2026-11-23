@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v20',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -2614,7 +2614,7 @@ export default class Start extends Phaser.Scene {
         if (allocationsMatch(finalAllocation, this.buildSelfInterestPartialAllocation())) {
             return 'acquisition_priority_maximum_survival';
         }
-        const maximumSurvivors = Math.min(finalAllocation.length, Math.floor(finalAllocation.reduce((sum, amount) => sum + amount, 0) / 5));
+        const maximumSurvivors = Math.min(finalAllocation.length, Math.floor(finalAllocation.reduce((sum, amount) => sum + amount, 0) / 8));
         const survivors = finalAllocation.filter(amount => amount >= 8).length;
         if (survivors === maximumSurvivors) {
             return 'other_maximum_survival';
