@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -146,7 +146,6 @@ export default class Start extends Phaser.Scene {
         this.instructionScreens = [
             'Welcome to the Survival Task. In this task, a group of three people find themselves lost in an otherwise uninhabited location.',
             'The people have been hunting and gathering food in order to survive. \n \nIf a person does not eat at least 8 pieces of food a day, he will not survive. \n \nIf a person collects more than 8 pieces of food a day, he can save the remainder for himself the next day.',
-            'This location usually has just enough natural resources to provide food for the group.',
             'Person A usually collects the least pieces of food per day. \n \nPerson B usually collects more than Person A but less than Person C. \n \nPerson C usually collects the most pieces of food per day.',
             'You will make decisions about how the group distributes its food. Choose what you think is best for the group. Consider only the food shown. \n \nThe baskets show what each person collected today, before any sharing. If the group adopts a redistribution rule, everyone must follow it.'
         ];
@@ -407,9 +406,6 @@ export default class Start extends Phaser.Scene {
             wordWrap: { width: 760 },
             lineSpacing: 8
         };
-        if (this.instructionIndex === 2) {
-            instructionStyle.fontStyle = 'bold';
-        }
         if (this.instructionIndex === 1) {
             instructionStyle.fontSize = '25px';
             instructionStyle.wordWrap = { width: 585 };
