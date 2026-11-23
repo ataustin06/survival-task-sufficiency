@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -1765,7 +1765,7 @@ export default class Start extends Phaser.Scene {
         this.addQuestionObject(this.createStaticHumanAvatar(640, 90, 'Person B', 0.74, 3368652, fixedFood.personB));
         this.addQuestionObject(this.createStaticHumanAvatar(280, 90, 'Person A', 0.66, 3381606, fixedFood.personA));
         this.addQuestionObject(this.add.rectangle(640, 435, 1120, this.phonePortrait ? 470 : 390, 16777215)).setStrokeStyle(4, 0);
-        this.addQuestionObject(this.add.text(640, 310, 'Person A usually collects the least food and needs help to survive. Person C usually collects the most food and can contribute more to feeding the group. When deciding whom to give food to, which person should the group prioritize?', {
+        this.addQuestionObject(this.add.text(640, 310, 'Person A usually collects the least food and needs help to survive. Person C usually collects the most food and can contribute more to feeding the group. When deciding how to distribute food, whose interests should the group put first?', {
             fontSize: '24px',
             color: '#000000',
             align: 'center',

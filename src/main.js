@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-confirmed-save-counter';
+import Start from './scenes/Start.js?v=20261123-survival-priority-wording-v2';
 
 console.log('START IMPORTED:', Start);
 
