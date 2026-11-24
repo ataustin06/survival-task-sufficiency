@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-apple-refinement-v1';
+import Start from './scenes/Start.js?v=20261123-survival-approved-baskets-candidate-v1';
 
 console.log('START IMPORTED:', Start);
 
