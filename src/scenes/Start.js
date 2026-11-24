@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123_apple_refinement_20261123_v1_approved_baskets_candidate_20261123_v1_proportion_refine_20261123_v2',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123_apple_refinement_20261123_v1_approved_baskets_candidate_20261123_v1_proportion_refine_20261123_v2_phone_back_20261123_v1',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -2296,12 +2296,18 @@ export default class Start extends Phaser.Scene {
             board._portraitNativeSize = true;
         }
         this.addQuestionObject(board);
-        this.addQuestionObject(this.add.text(640, 24, 'Arrange the food as you think best.', {
+        const allocationTitle = this.add.text(640, 24, 'Arrange the food as you think best.', {
             fontSize: '29px',
             color: '#000000',
             align: 'center',
             wordWrap: { width: 1150 }
-        }).setOrigin(0.5, 0));
+        }).setOrigin(0.5, 0);
+        this.addQuestionObject(allocationTitle);
+        if (this.phonePortrait && !isInitial) {
+            // Keep the existing Back button clear while leaving the remaining board unchanged.
+            allocationTitle.setWordWrapWidth(450);
+            allocationTitle.setPosition(445, 24);
+        }
         this.addQuestionObject(this.add.text(640, 70, 'Each person needs 8 pieces to survive.', {
             fontSize: '20px',
             color: '#000000',
