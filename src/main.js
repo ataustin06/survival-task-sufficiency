@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-rule-disaster-v3';
+import Start from './scenes/Start.js?v=20261123-survival-forced-choice-v4';
 
 console.log('START IMPORTED:', Start);
 
