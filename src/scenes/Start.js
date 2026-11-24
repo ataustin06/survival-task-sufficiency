@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -1703,7 +1703,7 @@ export default class Start extends Phaser.Scene {
             fairRuleChoice: () => this.showFairRuleQuestion(),
             foodPriorityChoice: () => this.showFoodPriorityQuestion(),
             workBreakChoice: () => this.showWorkBreakQuestion(),
-            floodPreparationChoice: () => this.showFloodRiskInstructionScreen(),
+            floodPreparationChoice: () => this.showFloodPreparationQuestion(),
             personDShareChoice: () => this.showPersonDShareQuestion(),
             personDEmpathyChoice: () => this.showPersonDEmpathyQuestion(),
             cooperationCompetitionChoice: () => this.showCooperationCompetitionInstructionScreen()
@@ -1784,9 +1784,9 @@ export default class Start extends Phaser.Scene {
     showWorkBreakQuestion() {
         this.enterRecordedScreen('showWorkBreakQuestion');
         this.clearQuestionScreen();
-        this.addQuestionObject(this.createTiredFace(640, 145, 1.6));
-        this.addQuestionObject(this.add.rectangle(640, 465, 1120, this.phonePortrait ? 400 : 360, 16777215)).setStrokeStyle(4, 0);
-        this.addQuestionObject(this.add.text(640, 365, 'Hunting and gathering food is hard work. If a person is sick or exhausted and needs a few days to recover, should they be able to stop collecting food and still receive enough food to survive?', {
+        this.addQuestionObject(this.createTiredFace(640, 130, 1.2));
+        this.addQuestionObject(this.add.rectangle(640, 465, 1120, this.phonePortrait ? 450 : 410, 16777215)).setStrokeStyle(4, 0);
+        this.addQuestionObject(this.add.text(640, 350, 'Should the group have a rule that a person who is sick or exhausted can take a few days off from collecting food and still get enough food from the group to survive?', {
             fontSize: '27px',
             color: '#000000',
             align: 'center',
@@ -1794,13 +1794,11 @@ export default class Start extends Phaser.Scene {
             lineSpacing: 6
         }).setOrigin(0.5));
         const answers = this.getStableAnswerOrder('workBreakChoice', Phaser.Utils.Array.Shuffle([
-            'Yes, let the person rest for a few days and still give them enough food to survive.',
-            'No, the person should keep collecting food rather than receive food while resting.'
+            'Yes, the group should have a rule that guarantees sick or exhausted people enough food to survive while they rest.',
+            'No, the group should not have a rule that guarantees sick or exhausted people enough food to survive while they rest.'
         ]));
-        this.createAnswerButton(640, 490, answers[0], 'workBreakChoice');
-        this.createAnswerButton(640, 580, answers[1], 'workBreakChoice');
-
-        ;
+        this.createAnswerButton(640, 475, answers[0], 'workBreakChoice');
+        this.createAnswerButton(640, 590, answers[1], 'workBreakChoice');
     }
     createTiredHumanAvatar(x, y, label, scale, shirtColor) {
         const person = this.add.container(x, y);
@@ -1852,87 +1850,26 @@ export default class Start extends Phaser.Scene {
         face.add(this.add.circle(46 * scale, 20 * scale, 4.5 * scale, sweatColor));
         return face;
     }
-    showFloodRiskInstructionScreen() {
-        this.enterRecordedScreen('showFloodRiskInstructionScreen');
-        this.clearQuestionScreen();
-        if (!this.floodTaskSides) {
-            const sticksOnLeft = Phaser.Math.Between(0, 1) === 0;
-            this.floodTaskSides = {
-                sticksX: sticksOnLeft ? 230 : 1050,
-                treeX: sticksOnLeft ? 1050 : 230
-            };
-        }
-        this.addQuestionObject(this.add.rectangle(640, 360, 1120, 560, 16777215)).setStrokeStyle(4, 0);
-        this.drawStormCloud(1035, 120, 0.55);
-        this.addQuestionObject(this.createStaticHumanAvatar(470, 345, '', 0.95, 13382451, 0, false));
-        this.addQuestionObject(this.createStaticHumanAvatar(640, 345, '', 0.88, 3368652, 0, false));
-        this.addQuestionObject(this.createStaticHumanAvatar(810, 345, '', 0.8, 3381606, 0, false));
-        this.addQuestionObject(this.add.text(640, 575, 'It is highly likely the location will flood when the rainy season arrives in a few weeks.', {
-            fontSize: '27px',
-            color: '#000000',
-            align: 'center',
-            wordWrap: { width: 980 },
-            lineSpacing: 6
-        }).setOrigin(0.5));
-        this.createNextButton(640, 675, 'Next', () => {
-            this.showFloodPreparationQuestion();
-        });
-    }
-    drawStormCloud(x, y, scale = 1) {
-        const cloudColor = 7305088;
-        const darkCloudColor = 5265504;
-        const rainColor = 4161471;
-        this.addQuestionObject(this.add.circle(x - 55 * scale, y + 5 * scale, 34 * scale, cloudColor));
-        this.addQuestionObject(this.add.circle(x - 20 * scale, y - 15 * scale, 45 * scale, cloudColor));
-        this.addQuestionObject(this.add.circle(x + 30 * scale, y - 10 * scale, 40 * scale, darkCloudColor));
-        this.addQuestionObject(this.add.circle(x + 70 * scale, y + 8 * scale, 30 * scale, cloudColor));
-        this.addQuestionObject(this.add.rectangle(x + 8 * scale, y + 18 * scale, 150 * scale, 42 * scale, cloudColor));
-        for (let i = 0; i < 6; i += 1) {
-            const rain = this.add.line(x - 65 * scale + i * 26 * scale, y + 65 * scale, 0, 0, -8 * scale, 28 * scale, rainColor);
-            rain.setLineWidth(3 * scale);
-            this.addQuestionObject(rain);
-        }
-    }
-    drawStickPile(x, y) {
-        const stickColor = 9132587;
-        for (let i = 0; i < 8; i += 1) {
-            const stick = this.add.rectangle(x + Phaser.Math.Between(-35, 35), y + Phaser.Math.Between(-20, 20), 95, 9, stickColor);
-            stick.setAngle(Phaser.Math.Between(-35, 35));
-            stick.setStrokeStyle(1, 4860434);
-            this.addQuestionObject(stick);
-        }
-    }
-    drawFloodTaskTree(x, y) {
-        this.addQuestionObject(this.add.rectangle(x, y + 75, 36, 130, 10183465));
-        this.addQuestionObject(this.add.circle(x, y - 40, 78, 3112242));
-        this.addQuestionObject(this.add.circle(x - 55, y, 58, 4037186));
-        this.addQuestionObject(this.add.circle(x + 55, y, 58, 4037186));
-        this.addQuestionObject(this.add.circle(x, y + 35, 64, 3116856));
-    }
     showFloodPreparationQuestion() {
         this.enterRecordedScreen('showFloodPreparationQuestion');
         this.clearQuestionScreen();
-        this.addQuestionObject(this.add.rectangle(640, 360, 1120, 560, 16777215)).setStrokeStyle(4, 0);
-        this.drawFloodTaskTree(this.floodTaskSides.treeX, 165);
-        this.drawStickPile(this.floodTaskSides.sticksX, 275);
-        this.addQuestionObject(this.createStaticHumanAvatar(470, 275, '', 0.82, 13382451, 0, false));
-        this.addQuestionObject(this.createStaticHumanAvatar(640, 275, '', 0.76, 3368652, 0, false));
-        this.addQuestionObject(this.createStaticHumanAvatar(810, 275, '', 0.7, 3381606, 0, false));
-        this.addQuestionObject(this.add.text(640, 400, 'Should the group spend the rest of the day looking for more food to eat or preparing the location to withstand flooding in a few weeks?', {
-            fontSize: '27px',
+        this.addQuestionObject(this.createStaticHumanAvatar(470, 115, '', 0.68, 13382451, 0, false));
+        this.addQuestionObject(this.createStaticHumanAvatar(640, 115, '', 0.64, 3368652, 0, false));
+        this.addQuestionObject(this.createStaticHumanAvatar(810, 115, '', 0.68, 3381606, 0, false));
+        this.addQuestionObject(this.add.rectangle(640, 425, 1120, this.phonePortrait ? 480 : 430, 16777215)).setStrokeStyle(4, 0);
+        this.addQuestionObject(this.add.text(640, 315, 'Should the group spend its time collecting more food now or preparing for future disasters?', {
+            fontSize: '29px',
             color: '#000000',
             align: 'center',
             wordWrap: { width: 980 },
             lineSpacing: 6
         }).setOrigin(0.5));
         const answers = this.getStableAnswerOrder('floodPreparationChoice', Phaser.Utils.Array.Shuffle([
-            'The group should spend the rest of the day looking for more food to eat.',
-            'The group should spend the rest of the day preparing the location to withstand flooding in a few weeks.'
+            'Collect more food now.',
+            'Prepare for future disasters.'
         ]));
-        this.createAnswerButton(640, 500, answers[0], 'floodPreparationChoice');
-        this.createAnswerButton(640, 580, answers[1], 'floodPreparationChoice');
-
-        ;
+        this.createAnswerButton(640, 455, answers[0], 'floodPreparationChoice');
+        this.createAnswerButton(640, 555, answers[1], 'floodPreparationChoice');
     }
     showPersonDInstructionScreen(nextQuestion = () => this.showPersonDShareQuestion()) {
         this.enterRecordedScreen('showPersonDInstructionScreen', () => this.showPersonDInstructionScreen(nextQuestion));

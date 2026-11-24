@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-priority-wording-v2';
+import Start from './scenes/Start.js?v=20261123-survival-rule-disaster-v3';
 
 console.log('START IMPORTED:', Start);
 
