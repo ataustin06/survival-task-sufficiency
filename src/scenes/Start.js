@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -1474,7 +1474,7 @@ export default class Start extends Phaser.Scene {
         this.addQuestionObject(this.createStaticHumanAvatar(640, 125, 'Person B', 0.72, 3368652, fixedFood.personB));
         this.addQuestionObject(this.createStaticHumanAvatar(260, 125, 'Person A', 0.66, 3381606, fixedFood.personA));
         this.addQuestionObject(this.add.rectangle(640, 455, 1080, 300, 16777215).setStrokeStyle(4, 0));
-        this.addQuestionObject(this.add.text(640, 350, 'How should the group distribute the food?', {
+        this.addQuestionObject(this.add.text(640, 350, 'If these were the only two options, how should the group distribute the food?', {
             fontSize: '28px',
             color: '#000000',
             align: 'center',
