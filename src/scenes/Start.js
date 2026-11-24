@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123_bigger_visuals_20261123_v1',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123_apple_refinement_20261123_v1',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -230,29 +230,68 @@ export default class Start extends Phaser.Scene {
         // Four separated pieces per row; this also accommodates all 30 pieces.
         return {
             x: (index % 4 - 1.5) * 14.5 * scale,
-            y: (15 - Math.floor(index / 4) * 14.5) * scale
+            y: (15 - Math.floor(index / 4) * 16.5) * scale
         };
     }
     createFoodFruit(x, y, scale = 1) {
-        const fruit = this.add.circle(x, y, 6 * scale, 11674146);
-        fruit.setStrokeStyle(1.25, 0);
-        return fruit;
+        // All food, including the tree fruit, uses this same compact apple.
+        // A sized Container retains Phaser's position, depth, drag, and input APIs;
+        // its outline method redraws the body for selection and deselection.
+        const artwork = this.add.graphics();
+        const fruit = this.add.container(x, y, [artwork]).setSize(12, 16).setScale(scale);
+        fruit.setStrokeStyle = (width, color, alpha = 1) => {
+            const body = [
+                {x: -5.8, y: -2.6}, {x: -4.8, y: -4.8},
+                {x: -2.6, y: -5.7}, {x: 0, y: -4.7},
+                {x: 2.6, y: -5.7}, {x: 4.8, y: -4.8},
+                {x: 5.8, y: -2.6}, {x: 6, y: 0.3},
+                {x: 5.2, y: 3.5}, {x: 3.6, y: 5.4},
+                {x: 1.7, y: 5.7}, {x: 0, y: 5.1},
+                {x: -1.7, y: 5.7}, {x: -3.6, y: 5.4},
+                {x: -5.2, y: 3.5}, {x: -6, y: 0.3}
+            ];
+            artwork.clear();
+            artwork.fillStyle(0xb22222).fillPoints(body, true);
+            artwork.lineStyle(width, color, alpha).strokePoints(body, true);
+            artwork.lineStyle(1.2, 0x653c20).beginPath()
+                .moveTo(0, -4.8).lineTo(0.6, -8).strokePath();
+            artwork.fillStyle(0x286728).fillPoints([
+                {x: 0.7, y: -7}, {x: 2.4, y: -8.2},
+                {x: 5.1, y: -7.9}, {x: 3.7, y: -6.5}
+            ], true);
+            return fruit;
+        };
+        return fruit.setStrokeStyle(1.25, 0);
     }
-    createTreeApple(x, y) {
-        // One native vector apple per original tree-fruit position.
-        const shape = this.add.graphics();
-        const outline = [
-            {x: -8, y: -4}, {x: -6, y: -7}, {x: -3, y: -8},
-            {x: 0, y: -6}, {x: 3, y: -8}, {x: 6, y: -7},
-            {x: 8, y: -4}, {x: 9, y: 0}, {x: 8, y: 5},
-            {x: 6, y: 8}, {x: 3, y: 9}, {x: 0, y: 8},
-            {x: -3, y: 9}, {x: -6, y: 8}, {x: -8, y: 5}, {x: -9, y: 0}
-        ];
-        shape.fillStyle(0xb22222).fillPoints(outline, true);
-        shape.lineStyle(1.2, 0x561313).strokePoints(outline, true);
-        const stem = this.add.rectangle(0, -9, 2.5, 6, 0x653c20).setAngle(12);
-        const leaf = this.add.ellipse(5, -11, 8, 4, 0x286728).setAngle(-30);
-        return this.add.container(x, y, [shape, stem, leaf]);
+    createTreeApple(x, y, branches, branchColor) {
+        // Connect the apple's stem to the nearest existing limb. The twig is
+        // drawn in apple-local coordinates so portrait layout moves both together.
+        const appleScale = 1.5;
+        if (!branches) return this.createFoodFruit(x, y, appleScale).setDepth(8);
+        const stem = {x, y: y - 8 * appleScale};
+        let nearest = null;
+        let nearestDistance = Infinity;
+        branches.forEach(branch => {
+            const radians = branch.angle * Math.PI / 180;
+            const dx = Math.cos(radians) * branch.width / 2;
+            const dy = Math.sin(radians) * branch.width / 2;
+            const startX = branch.x - dx, startY = branch.y - dy;
+            const vx = 2 * dx, vy = 2 * dy;
+            const projection = Math.max(0, Math.min(1,
+                ((stem.x - startX) * vx + (stem.y - startY) * vy) / (vx * vx + vy * vy)));
+            const point = {x: startX + projection * vx, y: startY + projection * vy};
+            const distance = Math.hypot(stem.x - point.x, stem.y - point.y);
+            if (distance < nearestDistance) {
+                nearest = point;
+                nearestDistance = distance;
+            }
+        });
+        const twig = this.add.graphics({x, y});
+        twig.lineStyle(2.5, branchColor).beginPath()
+            .moveTo(nearest.x - x, nearest.y - y).lineTo(0, -8 * appleScale).strokePath();
+        twig.setDepth(7);
+        this.addGameObject(twig);
+        return this.createFoodFruit(x, y, appleScale).setDepth(8);
     }
     buildSurplusOnlyPartialAllocation() {
         const fixedFood = this.getFixedFoodCounts();
@@ -593,22 +632,24 @@ export default class Start extends Phaser.Scene {
         const basketColor = 12089650;
         const basketDark = 6042903;
         const basketLight = 14195274;
-        const handle = this.add.arc(0, -28 * scale, 29 * scale, 205, 335, true);
-        handle.setStrokeStyle(4 * scale, basketDark);
-        const body = this.add.rectangle(0, 2.5 * scale, 64 * scale, 58 * scale, basketColor);
-        body.setStrokeStyle(2 * scale, basketDark);
-        const rim = this.add.rectangle(0, -24 * scale, 68 * scale, 7 * scale, basketLight);
-        rim.setStrokeStyle(2 * scale, basketDark);
-        basket.add([
-            handle,
-            body,
-            rim
-        ]);
+        // A shallow basket supports the same four countable pieces per row.
+        const body = this.add.graphics();
+        const shape = [
+            {x: -30 * scale, y: -10.9 * scale},
+            {x: 30 * scale, y: -10.9 * scale},
+            {x: 29 * scale, y: 24 * scale},
+            {x: -29 * scale, y: 24 * scale}
+        ];
+        body.fillStyle(basketColor).fillPoints(shape, true);
+        body.lineStyle(2 * scale, basketDark).strokePoints(shape, true);
+        const rim = this.add.rectangle(0, -10.9 * scale, 62 * scale, 4 * scale, basketLight);
+        rim.setStrokeStyle(1.5 * scale, basketDark);
+        basket.add([body, rim]);
         return basket;
     }
     createBasketThresholdMarker(x, y, scale) {
         // Mark the gap immediately above the second row (eight pieces).
-        const thresholdGap = this.getBasketFoodOffset(7, scale).y - 7.25 * scale;
+        const thresholdGap = this.getBasketFoodOffset(7, scale).y - 9.4 * scale;
         const line = this.add.rectangle(0, 0, 60 * scale, 0.9 * scale, 0x30200e);
         // The arrow is outside the fruit, so it remains legible without covering a piece.
         const arrow = this.add.triangle(35 * scale, 0, 0, 4.5 * scale, 9 * scale, 0, 9 * scale, 9 * scale, 0x30200e);
@@ -670,7 +711,7 @@ export default class Start extends Phaser.Scene {
         this.addGameObject(avatar);
         const marker = this.createBasketThresholdMarker(x + 69 * scale, y + 31 * scale, scale).setDepth(101);
         if (this.phonePortrait) {
-            marker.setPosition(avatar.x + 69 * scale, avatar.y + 31 * scale + this.getBasketFoodOffset(7, scale).y - 7.25 * scale);
+            marker.setPosition(avatar.x + 69 * scale, avatar.y + 31 * scale + this.getBasketFoodOffset(7, scale).y - 9.4 * scale);
             marker._portraitPositioned = true;
         }
         this.addGameObject(marker);
@@ -1003,7 +1044,7 @@ export default class Start extends Phaser.Scene {
             const startX = avatarX + 69 * scale + this.getBasketFoodOffset(position, scale).x;
             const startY = avatarY + 31 * scale + this.getBasketFoodOffset(position, scale).y;
             const food = this.createFoodFruit(startX, startY, scale);
-            food.setInteractive(new Phaser.Geom.Circle(0, 0, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
+            food.setInteractive(new Phaser.Geom.Circle(6, 8, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
             food.setDepth(10);
             food.startX = startX;
             food.startY = startY;
@@ -1328,7 +1369,7 @@ export default class Start extends Phaser.Scene {
         if (showBasket) {
             const marker = this.createBasketThresholdMarker(x + 69 * scale, y + 31 * scale, scale).setDepth(21);
             if (this.phonePortrait) {
-                marker.setPosition(this.portraitX(x) + 69 * scale, this.portraitY(y) + 31 * scale + this.getBasketFoodOffset(7, scale).y - 7.25 * scale);
+                marker.setPosition(this.portraitX(x) + 69 * scale, this.portraitY(y) + 31 * scale + this.getBasketFoodOffset(7, scale).y - 9.4 * scale);
                 marker._portraitPositioned = true;
             }
             this.addQuestionObject(marker);
@@ -2021,8 +2062,7 @@ export default class Start extends Phaser.Scene {
             this.addQuestionObject(this.createPanelAvatar(x - 145, y + 45, '', 0.72, 3368652, 'scowl', 'down'));
             this.addQuestionObject(this.createPanelAvatar(x - 35, y + 45, '', 0.72, 13382451, 'scowl', 'right'));
             this.addQuestionObject(this.createPanelAvatar(x + 55, y + 45, '', 0.72, 3381606, 'scowl', 'left'));
-            const food = this.add.circle(x + 10, y + 42, 5.5, 11674146);
-            food.setStrokeStyle(1, 0);
+            const food = this.createFoodFruit(x + 10, y + 42);
             food.setDepth(20);
             this.addQuestionObject(food);
         }
@@ -2372,7 +2412,7 @@ export default class Start extends Phaser.Scene {
             for (let index = 0; index < role.amount; index += 1) {
                 const food = this.createFoodFruit(0, 0);
                 food._portraitPositioned = this.phonePortrait;
-                food.setInteractive(new Phaser.Geom.Circle(6, 6, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
+                food.setInteractive(new Phaser.Geom.Circle(6, 8, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
                 food.setDepth(20);
                 food.assignedPerson = role.label;
                 this.input.setDraggable(food);
