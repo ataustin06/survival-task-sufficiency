@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-personal-two-options-v5';
+import Start from './scenes/Start.js?v=20261123-survival-bigger-visuals-v1';
 
 console.log('START IMPORTED:', Start);
 

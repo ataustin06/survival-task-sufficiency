@@ -24,7 +24,7 @@ export default class Start extends Phaser.Scene {
             gameId: gameId,
             qualtricsId: qualtricsId,
             condition: 'sufficiency',
-            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123',
+            gameVersion: 'sufficiency_english_gini_8_piece_v21_neutral_instructions_20261123_confirmed_save_counter_20261123_priority_wording_20261123_rule_disaster_20261123_forced_choice_20261123_personal_two_options_20261123_bigger_visuals_20261123_v1',
             gameStartTime: new Date().toISOString(),
             gameEndTime: null,
             totalDurationMs: null,
@@ -227,15 +227,32 @@ export default class Start extends Phaser.Scene {
         };
     }
     getBasketFoodOffset(index, scale = 1) {
+        // Four separated pieces per row; this also accommodates all 30 pieces.
         return {
-            x: (index % 4 - 1.5) * 8 * scale,
-            y: (15 - Math.floor(index / 4) * 7.5) * scale
+            x: (index % 4 - 1.5) * 14.5 * scale,
+            y: (15 - Math.floor(index / 4) * 14.5) * scale
         };
     }
     createFoodFruit(x, y, scale = 1) {
-        const fruit = this.add.circle(x, y, 4 * scale, 11674146);
+        const fruit = this.add.circle(x, y, 6 * scale, 11674146);
         fruit.setStrokeStyle(1.25, 0);
         return fruit;
+    }
+    createTreeApple(x, y) {
+        // One native vector apple per original tree-fruit position.
+        const shape = this.add.graphics();
+        const outline = [
+            {x: -8, y: -4}, {x: -6, y: -7}, {x: -3, y: -8},
+            {x: 0, y: -6}, {x: 3, y: -8}, {x: 6, y: -7},
+            {x: 8, y: -4}, {x: 9, y: 0}, {x: 8, y: 5},
+            {x: 6, y: 8}, {x: 3, y: 9}, {x: 0, y: 8},
+            {x: -3, y: 9}, {x: -6, y: 8}, {x: -8, y: 5}, {x: -9, y: 0}
+        ];
+        shape.fillStyle(0xb22222).fillPoints(outline, true);
+        shape.lineStyle(1.2, 0x561313).strokePoints(outline, true);
+        const stem = this.add.rectangle(0, -9, 2.5, 6, 0x653c20).setAngle(12);
+        const leaf = this.add.ellipse(5, -11, 8, 4, 0x286728).setAngle(-30);
+        return this.add.container(x, y, [shape, stem, leaf]);
     }
     buildSurplusOnlyPartialAllocation() {
         const fixedFood = this.getFixedFoodCounts();
@@ -426,7 +443,7 @@ export default class Start extends Phaser.Scene {
     }
     showSurvivalThresholdExample() {
         const centerX = 975;
-        const fruitScale = 3.5;
+        const fruitScale = 2.5;
         for (let index = 0; index < 8; index += 1) {
             const fruitX = centerX + (index % 4 - 1.5) * 40;
             const fruitY = 355 + Math.floor(index / 4) * 40;
@@ -526,9 +543,9 @@ export default class Start extends Phaser.Scene {
         this.selectedAvatar = null;
         this.foodCollectionNextShown = false;
         const baselineY = 360;
-        const personC = this.createHumanAvatar(730, baselineY, 'Person C', 1.08, 13382451, 0);
-        const personB = this.createHumanAvatar(450, baselineY, 'Person B', 1, 3368652, 0);
-        const personA = this.createHumanAvatar(170, baselineY, 'Person A', 1, 3381606, 0);
+        const personC = this.createHumanAvatar(730, baselineY, 'Person C', 1.3, 13382451, 0);
+        const personB = this.createHumanAvatar(450, baselineY, 'Person B', 1.24, 3368652, 0);
+        const personA = this.createHumanAvatar(170, baselineY, 'Person A', 1.18, 3381606, 0);
         this.avatars.push(personC, personB, personA);
     }
     drawTree() {
@@ -561,7 +578,7 @@ export default class Start extends Phaser.Scene {
         ];
         // Tree fruit is illustrative; basket totals come from getFixedFoodCounts().
         fruitPositions.forEach(position => {
-            const fruit = this.createFoodFruit(1085 + position[0], 285 + position[1]);
+            const fruit = this.createTreeApple(1085 + position[0], 285 + position[1]);
             this.addGameObject(fruit);
         });
         const treeClickZone = this.add.zone(1085, 305, 340, 380);
@@ -576,11 +593,11 @@ export default class Start extends Phaser.Scene {
         const basketColor = 12089650;
         const basketDark = 6042903;
         const basketLight = 14195274;
-        const handle = this.add.arc(0, -22 * scale, 18 * scale, 205, 335, true);
+        const handle = this.add.arc(0, -28 * scale, 29 * scale, 205, 335, true);
         handle.setStrokeStyle(4 * scale, basketDark);
-        const body = this.add.rectangle(0, 2.5 * scale, 34 * scale, 37 * scale, basketColor);
+        const body = this.add.rectangle(0, 2.5 * scale, 64 * scale, 58 * scale, basketColor);
         body.setStrokeStyle(2 * scale, basketDark);
-        const rim = this.add.rectangle(0, -15 * scale, 40 * scale, 8 * scale, basketLight);
+        const rim = this.add.rectangle(0, -24 * scale, 68 * scale, 7 * scale, basketLight);
         rim.setStrokeStyle(2 * scale, basketDark);
         basket.add([
             handle,
@@ -590,9 +607,12 @@ export default class Start extends Phaser.Scene {
         return basket;
     }
     createBasketThresholdMarker(x, y, scale) {
-        // Eight fruits fill two rows of four; mark the top edge of that stack.
-        const eighthFruitTop = this.getBasketFoodOffset(7, scale).y - 4 * scale;
-        return this.add.rectangle(x, y + eighthFruitTop, 32 * scale, 3, 0x5c3517);
+        // Mark the gap immediately above the second row (eight pieces).
+        const thresholdGap = this.getBasketFoodOffset(7, scale).y - 7.25 * scale;
+        const line = this.add.rectangle(0, 0, 60 * scale, 0.9 * scale, 0x30200e);
+        // The arrow is outside the fruit, so it remains legible without covering a piece.
+        const arrow = this.add.triangle(35 * scale, 0, 0, 4.5 * scale, 9 * scale, 0, 9 * scale, 9 * scale, 0x30200e);
+        return this.add.container(x, y + thresholdGap, [line, arrow]);
     }
     createHumanAvatar(x, y, label, scale, shirtColor, startingFood = 0) {
         const avatar = this.add.container(x, y);
@@ -612,7 +632,7 @@ export default class Start extends Phaser.Scene {
             this.add.rectangle(0, 8 * scale, 46 * scale, 64 * scale, shirtColor),
             this.add.rectangle(-32 * scale, 10 * scale, 10 * scale, 52 * scale, skinColor),
             this.add.rectangle(32 * scale, 10 * scale, 10 * scale, 52 * scale, skinColor),
-            this.createBasket(39 * scale, 31 * scale, scale),
+            this.createBasket(69 * scale, 31 * scale, scale),
             this.add.rectangle(-12 * scale, 71 * scale, 14 * scale, 48 * scale, pantsColor),
             this.add.rectangle(12 * scale, 71 * scale, 14 * scale, 48 * scale, pantsColor),
             this.add.text(0, 135 * scale, label, {
@@ -628,7 +648,7 @@ export default class Start extends Phaser.Scene {
             this.add.zone(0, 8 * scale, 65 * scale, 78 * scale),
             this.add.zone(-32 * scale, 10 * scale, 32 * scale, 70 * scale),
             this.add.zone(32 * scale, 10 * scale, 32 * scale, 70 * scale),
-            this.add.zone(39 * scale, 25.5 * scale, 60 * scale, 76 * scale),
+            this.add.zone(69 * scale, 25.5 * scale, 74 * scale, 96 * scale),
             this.add.zone(-12 * scale, 75 * scale, 32 * scale, 65 * scale),
             this.add.zone(12 * scale, 75 * scale, 32 * scale, 65 * scale)
         ];
@@ -643,14 +663,14 @@ export default class Start extends Phaser.Scene {
         for (let i = 0; i < startingFood; i += 1) {
             avatar.foodCount += 1;
             const position = avatar.foodCount - 1;
-            const appleX = 39 * scale + this.getBasketFoodOffset(position, scale).x;
+            const appleX = 69 * scale + this.getBasketFoodOffset(position, scale).x;
             const appleY = 31 * scale + this.getBasketFoodOffset(position, scale).y;
             avatar.add(this.createFoodFruit(appleX, appleY, scale));
         }
         this.addGameObject(avatar);
-        const marker = this.createBasketThresholdMarker(x + 39 * scale, y + 31 * scale, scale).setDepth(101);
+        const marker = this.createBasketThresholdMarker(x + 69 * scale, y + 31 * scale, scale).setDepth(101);
         if (this.phonePortrait) {
-            marker.setPosition(avatar.x + 39 * scale, avatar.y + 31 * scale + this.getBasketFoodOffset(7, scale).y - 4 * scale);
+            marker.setPosition(avatar.x + 69 * scale, avatar.y + 31 * scale + this.getBasketFoodOffset(7, scale).y - 7.25 * scale);
             marker._portraitPositioned = true;
         }
         this.addGameObject(marker);
@@ -709,7 +729,7 @@ export default class Start extends Phaser.Scene {
         for (let i = 0; i < amount; i += 1) {
             avatar.foodCount += 1;
             const position = avatar.foodCount - 1;
-            const appleX = 39 * scale + this.getBasketFoodOffset(position, scale).x;
+            const appleX = 69 * scale + this.getBasketFoodOffset(position, scale).x;
             const appleY = 31 * scale + this.getBasketFoodOffset(position, scale).y;
             avatar.add(this.createFoodFruit(appleX, appleY, scale));
         }
@@ -724,7 +744,7 @@ export default class Start extends Phaser.Scene {
             person.setDepth(10);
         });
         avatar.setDepth(100);
-        avatar.selectionBox = this.add.rectangle(avatar.x, avatar.y, 180, 260, 0, 0);
+        avatar.selectionBox = this.add.rectangle(avatar.x + 30 * avatar.basketScale, avatar.y + 40 * avatar.basketScale, 150 * avatar.basketScale, 240 * avatar.basketScale, 0, 0);
         avatar.selectionBox._portraitPositioned = true;
         avatar.selectionBox.setStrokeStyle(4, 0);
         avatar.selectionBox.setDepth(99);
@@ -758,28 +778,31 @@ export default class Start extends Phaser.Scene {
             {
                 label: 'Person C',
                 x: 1000,
-                scale: 1.12,
+                scale: 1.28,
                 color: 13382451,
                 foodAmount: fixedFood.personC
             },
             {
                 label: 'Person B',
                 x: 620,
-                scale: 1,
+                scale: 1.2,
                 color: 3368652,
                 foodAmount: fixedFood.personB
             },
             {
                 label: 'Person A',
                 x: 230,
-                scale: 0.88,
+                scale: 1.12,
                 color: 3381606,
                 foodAmount: fixedFood.personA
             }
         ];
         people.forEach(person => {
             this.addQuestionObject(this.createStaticHumanAvatar(person.x, baselineY, person.label, person.scale, person.color, 0, true, 160));
-            const selector = this.add.rectangle(person.x, baselineY, 210, 270, 16777215, 0);
+            const selectorX = (this.phonePortrait ? this.portraitX(person.x) : person.x) + 28 * person.scale;
+            const selectorY = (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 36 * person.scale;
+            const selector = this.add.rectangle(selectorX, selectorY, 150 * person.scale, 230 * person.scale, 16777215, 0);
+            selector._portraitPositioned = this.phonePortrait;
             selector.setInteractive({ useHandCursor: true });
             selector.setDepth(5);
             selector.on('pointerdown', () => {
@@ -819,7 +842,7 @@ export default class Start extends Phaser.Scene {
     }
     createCountingFoodPieces(avatarX, avatarY, scale, foodAmount, personLabel) {
         for (let i = 0; i < foodAmount; i += 1) {
-            const foodX = (this.phonePortrait ? this.portraitX(avatarX) : avatarX) + 39 * scale + this.getBasketFoodOffset(i, scale).x;
+            const foodX = (this.phonePortrait ? this.portraitX(avatarX) : avatarX) + 69 * scale + this.getBasketFoodOffset(i, scale).x;
             const foodY = (this.phonePortrait ? this.portraitY(avatarY) : avatarY) + 31 * scale + this.getBasketFoodOffset(i, scale).y;
             const food = this.createFoodFruit(foodX, foodY, scale);
             food._portraitPositioned = this.phonePortrait;
@@ -977,7 +1000,7 @@ export default class Start extends Phaser.Scene {
         };
         for (let i = 0; i < foodAmount; i += 1) {
             const position = i;
-            const startX = avatarX + 39 * scale + this.getBasketFoodOffset(position, scale).x;
+            const startX = avatarX + 69 * scale + this.getBasketFoodOffset(position, scale).x;
             const startY = avatarY + 31 * scale + this.getBasketFoodOffset(position, scale).y;
             const food = this.createFoodFruit(startX, startY, scale);
             food.setInteractive(new Phaser.Geom.Circle(0, 0, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
@@ -1094,13 +1117,13 @@ export default class Start extends Phaser.Scene {
         this.addQuestionObject(this.equalDivisionBlanketLabel);
         const baselineY = 430;
         this.equalDivisionBaselineY = baselineY;
-        this.addQuestionObject(this.createStaticHumanAvatar(1020, baselineY, 'Person C', 1.05, 13382451, 0));
-        this.addQuestionObject(this.createStaticHumanAvatar(640, baselineY, 'Person B', 1, 3368652, 0));
-        this.addQuestionObject(this.createStaticHumanAvatar(260, baselineY, 'Person A', 0.9, 3381606, 0));
+        this.addQuestionObject(this.createStaticHumanAvatar(1020, baselineY, 'Person C', 1.2, 13382451, 0));
+        this.addQuestionObject(this.createStaticHumanAvatar(640, baselineY, 'Person B', 1.12, 3368652, 0));
+        this.addQuestionObject(this.createStaticHumanAvatar(260, baselineY, 'Person A', 1.04, 3381606, 0));
         this.createEqualDivisionFoodPieces(totalFood);
         if (restoreOriginal) {
             const counts = [fixedFood.personC, fixedFood.personB, fixedFood.personA];
-            const scales = [1.05, 1, 0.9];
+            const scales = [1.2, 1.12, 1.04];
             const centers = [1020, 640, 260];
             let foodIndex = 0;
             roleLabels.forEach((role, index) => {
@@ -1108,7 +1131,8 @@ export default class Start extends Phaser.Scene {
                 for (let pile = 0; pile < counts[index]; pile++) {
                     const food = this.equalDivisionFoods[foodIndex++];
                     food.assignedPerson = role;
-                    food.x = (this.phonePortrait ? this.portraitX(centers[index]) : centers[index]) + 39 * scale + this.getBasketFoodOffset(pile, scale).x;
+                    food.setScale(scale);
+                    food.x = (this.phonePortrait ? this.portraitX(centers[index]) : centers[index]) + 69 * scale + this.getBasketFoodOffset(pile, scale).x;
                     food.y = (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31 * scale + this.getBasketFoodOffset(pile, scale).y;
                     food.setDepth(20);
                 }
@@ -1125,19 +1149,19 @@ export default class Start extends Phaser.Scene {
             }
             const basketPositions = {
                 'Person C': {
-                    x: (this.phonePortrait ? this.portraitX(1020) : 1020) + 39 * 1.05,
-                    y: (this.phonePortrait ? this.portraitY(this.equalDivisionBaselineY) : this.equalDivisionBaselineY) + 31 * 1.05,
-                    scale: 1.05
+                    x: (this.phonePortrait ? this.portraitX(1020) : 1020) + 69 * 1.2,
+                    y: (this.phonePortrait ? this.portraitY(this.equalDivisionBaselineY) : this.equalDivisionBaselineY) + 31 * 1.2,
+                    scale: 1.2
                 },
                 'Person B': {
-                    x: (this.phonePortrait ? this.portraitX(640) : 640) + 39,
-                    y: (this.phonePortrait ? this.portraitY(this.equalDivisionBaselineY) : this.equalDivisionBaselineY) + 31,
-                    scale: 1
+                    x: (this.phonePortrait ? this.portraitX(640) : 640) + 69 * 1.12,
+                    y: (this.phonePortrait ? this.portraitY(this.equalDivisionBaselineY) : this.equalDivisionBaselineY) + 31 * 1.12,
+                    scale: 1.12
                 },
                 'Person A': {
-                    x: (this.phonePortrait ? this.portraitX(260) : 260) + 39 * 0.9,
-                    y: (this.phonePortrait ? this.portraitY(this.equalDivisionBaselineY) : this.equalDivisionBaselineY) + 31 * 0.9,
-                    scale: 0.9
+                    x: (this.phonePortrait ? this.portraitX(260) : 260) + 69 * 1.04,
+                    y: (this.phonePortrait ? this.portraitY(this.equalDivisionBaselineY) : this.equalDivisionBaselineY) + 31 * 1.04,
+                    scale: 1.04
                 }
             };
             this.equalDivisionFoods.forEach((food, index) => {
@@ -1146,6 +1170,7 @@ export default class Start extends Phaser.Scene {
                 const pilePosition = index % equalShare;
                 const basket = basketPositions[roleLabel];
                 food.assignedPerson = roleLabel;
+                food.setScale(basket.scale);
                 food.x = basket.x + this.getBasketFoodOffset(pilePosition, basket.scale).x;
                 food.y = basket.y + this.getBasketFoodOffset(pilePosition, basket.scale).y;
                 food.setDepth(20);
@@ -1285,11 +1310,11 @@ export default class Start extends Phaser.Scene {
         person.add(this.add.rectangle(-32 * scale, 10 * scale, 10 * scale, 52 * scale, skinColor));
         person.add(this.add.rectangle(32 * scale, 10 * scale, 10 * scale, 52 * scale, skinColor));
         if (showBasket) {
-            person.add(this.createBasket(39 * scale, 31 * scale, scale));
+            person.add(this.createBasket(69 * scale, 31 * scale, scale));
             for (let i = 0; i < foodAmount; i += 1) {
                 person.foodCount += 1;
                 const position = person.foodCount - 1;
-                const appleX = 39 * scale + this.getBasketFoodOffset(position, scale).x;
+                const appleX = 69 * scale + this.getBasketFoodOffset(position, scale).x;
                 const appleY = 31 * scale + this.getBasketFoodOffset(position, scale).y;
                 person.add(this.createFoodFruit(appleX, appleY, scale));
             }
@@ -1301,9 +1326,9 @@ export default class Start extends Phaser.Scene {
             color: '#000000'
         }).setOrigin(0.5));
         if (showBasket) {
-            const marker = this.createBasketThresholdMarker(x + 39 * scale, y + 31 * scale, scale).setDepth(21);
+            const marker = this.createBasketThresholdMarker(x + 69 * scale, y + 31 * scale, scale).setDepth(21);
             if (this.phonePortrait) {
-                marker.setPosition(this.portraitX(x) + 39 * scale, this.portraitY(y) + 31 * scale + this.getBasketFoodOffset(7, scale).y - 4 * scale);
+                marker.setPosition(this.portraitX(x) + 69 * scale, this.portraitY(y) + 31 * scale + this.getBasketFoodOffset(7, scale).y - 7.25 * scale);
                 marker._portraitPositioned = true;
             }
             this.addQuestionObject(marker);
@@ -1323,21 +1348,21 @@ export default class Start extends Phaser.Scene {
             {
                 label: 'Person C',
                 x: 1020,
-                scale: 1.05,
+                scale: 1.2,
                 color: 13382451,
                 foodAmount: fixedFood.personC
             },
             {
                 label: 'Person B',
                 x: 640,
-                scale: 1,
+                scale: 1.12,
                 color: 3368652,
                 foodAmount: fixedFood.personB
             },
             {
                 label: 'Person A',
                 x: 260,
-                scale: 0.9,
+                scale: 1.04,
                 color: 3381606,
                 foodAmount: fixedFood.personA
             }
@@ -1366,23 +1391,24 @@ export default class Start extends Phaser.Scene {
         this.partialRedistributionBaselineY = baselineY;
         const basketPositions = {
             'Person C': {
-                x: (this.phonePortrait ? this.portraitX(1020) : 1020) + 39 * 1.05,
-                y: (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31 * 1.05,
-                scale: 1.05
+                x: (this.phonePortrait ? this.portraitX(1020) : 1020) + 69 * 1.2,
+                y: (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31 * 1.2,
+                scale: 1.2
             },
             'Person B': {
-                x: (this.phonePortrait ? this.portraitX(640) : 640) + 39,
-                y: (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31,
-                scale: 1
+                x: (this.phonePortrait ? this.portraitX(640) : 640) + 69 * 1.12,
+                y: (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31 * 1.12,
+                scale: 1.12
             },
             'Person A': {
-                x: (this.phonePortrait ? this.portraitX(260) : 260) + 39 * 0.9,
-                y: (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31 * 0.9,
-                scale: 0.9
+                x: (this.phonePortrait ? this.portraitX(260) : 260) + 69 * 1.04,
+                y: (this.phonePortrait ? this.portraitY(baselineY) : baselineY) + 31 * 1.04,
+                scale: 1.04
             }
         };
         const placeFood = (food, personLabel, pilePosition) => {
             const basket = basketPositions[personLabel];
+            food.setScale(basket.scale);
             food.x = basket.x + this.getBasketFoodOffset(pilePosition, basket.scale).x;
             food.y = basket.y + this.getBasketFoodOffset(pilePosition, basket.scale).y;
             food.setDepth(20);
@@ -2148,7 +2174,12 @@ export default class Start extends Phaser.Scene {
         const fixedFood = this.getFixedFoodCounts();
         const isInitial = this.allocationStage === 'initial';
         const revealRole = !isInitial && this.gameData.respondentRoleRevealed ? this.gameData.respondentRole : null;
-        this.addQuestionObject(this.add.rectangle(640, 360, 1240, 700, 16777215).setStrokeStyle(3, 0));
+        const board = this.add.rectangle(640, 360, this.phonePortrait ? 708 : 1240, 700, 16777215).setStrokeStyle(3, 0);
+        if (this.phonePortrait) {
+            board.setScale(1, 16 / 9);
+            board._portraitNativeSize = true;
+        }
+        this.addQuestionObject(board);
         this.addQuestionObject(this.add.text(640, 24, 'Arrange the food as you think best.', {
             fontSize: '29px',
             color: '#000000',
@@ -2179,36 +2210,43 @@ export default class Start extends Phaser.Scene {
             {
                 label: 'Person C',
                 x: 1020,
-                scale: 0.9,
+                scale: 1.2,
                 shirtColor: 13382451
             },
             {
                 label: 'Person B',
                 x: 640,
-                scale: 0.84,
+                scale: 1.12,
                 shirtColor: 3368652
             },
             {
                 label: 'Person A',
                 x: 260,
-                scale: 0.78,
+                scale: 1.04,
                 shirtColor: 3381606
             }
         ];
-        this.selfInterestBaselineY = 330;
+        this.selfInterestBaselineY = 290;
         this.selfInterestDropZones = {};
         this.selectedSelfInterestFood = null;
         this.input.dragDistanceThreshold = 6;
         this.selfInterestCountTexts = {};
         roles.forEach(role => {
             if (role.label === revealRole) {
-                const outline = this.add.rectangle(role.x, 350, 270, this.phonePortrait ? 320 : 390, 16777215, 0);
+                const outlineX = (this.phonePortrait ? this.portraitX(role.x) : role.x) + 30 * role.scale;
+                const outlineY = (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 40 * role.scale;
+                const outline = this.add.rectangle(outlineX, outlineY, 150 * role.scale, 240 * role.scale, 16777215, 0);
+                outline._portraitPositioned = this.phonePortrait;
                 outline.setStrokeStyle(6, 1797946);
                 this.addQuestionObject(outline);
             }
             this.addQuestionObject(this.createStaticHumanAvatar(role.x, this.selfInterestBaselineY, role.label, role.scale, role.shirtColor, 0));
-            const zoneWidth = this.phonePortrait ? 185 : 240;
-            const dropZone = this.add.zone(role.x, 365, zoneWidth, 330).setRectangleDropZone(zoneWidth, 330);
+            // Keep the complete person and basket inside non-overlapping drop zones.
+            const zoneWidth = this.phonePortrait ? 200 : 240;
+            const zoneX = (this.phonePortrait ? this.portraitX(role.x) : role.x) + 45;
+            const zoneY = this.phonePortrait ? this.portraitY(330) : 330;
+            const dropZone = this.add.zone(zoneX, zoneY, zoneWidth, 330).setRectangleDropZone(zoneWidth, 330);
+            dropZone._portraitPositioned = this.phonePortrait;
             dropZone.setInteractive({useHandCursor: true});
             dropZone.on('pointerup', () => {
                 if (this.selectedSelfInterestFood && !this.selectedSelfInterestFood.wasDragged) {
@@ -2334,7 +2372,7 @@ export default class Start extends Phaser.Scene {
             for (let index = 0; index < role.amount; index += 1) {
                 const food = this.createFoodFruit(0, 0);
                 food._portraitPositioned = this.phonePortrait;
-                food.setInteractive(new Phaser.Geom.Circle(0, 0, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
+                food.setInteractive(new Phaser.Geom.Circle(6, 6, 28), Phaser.Geom.Circle.Contains, { useHandCursor: true });
                 food.setDepth(20);
                 food.assignedPerson = role.label;
                 this.input.setDraggable(food);
@@ -2357,7 +2395,7 @@ export default class Start extends Phaser.Scene {
                     food.dragGroup.forEach((piece, index) => piece.setDepth(100 + index));
                 });
                 food.on('drag', (pointer, dragX, dragY) => {
-                    const offsets = [[0, 0], [10, 0], [0, 10], [10, 10]];
+                    const offsets = [[0, 0], [16, 0], [0, 16], [16, 16]];
                     (food.dragGroup || [food]).forEach((piece, index) => {
                         piece.x = dragX + offsets[index][0];
                         piece.y = dragY + offsets[index][1];
@@ -2412,19 +2450,19 @@ export default class Start extends Phaser.Scene {
     refreshSelfInterestFoodPositions() {
         const basketPositions = {
             'Person C': {
-                x: (this.phonePortrait ? this.portraitX(1020) : 1020) + 39 * 0.9,
-                y: (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 31 * 0.9,
-                scale: 0.9
+                x: (this.phonePortrait ? this.portraitX(1020) : 1020) + 69 * 1.2,
+                y: (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 31 * 1.2,
+                scale: 1.2
             },
             'Person B': {
-                x: (this.phonePortrait ? this.portraitX(640) : 640) + 39 * 0.84,
-                y: (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 31 * 0.84,
-                scale: 0.84
+                x: (this.phonePortrait ? this.portraitX(640) : 640) + 69 * 1.12,
+                y: (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 31 * 1.12,
+                scale: 1.12
             },
             'Person A': {
-                x: (this.phonePortrait ? this.portraitX(260) : 260) + 39 * 0.78,
-                y: (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 31 * 0.78,
-                scale: 0.78
+                x: (this.phonePortrait ? this.portraitX(260) : 260) + 69 * 1.04,
+                y: (this.phonePortrait ? this.portraitY(this.selfInterestBaselineY) : this.selfInterestBaselineY) + 31 * 1.04,
+                scale: 1.04
             }
         };
         const pileCounts = {
@@ -2437,6 +2475,7 @@ export default class Start extends Phaser.Scene {
             const pilePosition = pileCounts[roleLabel];
             const basket = basketPositions[roleLabel];
             pileCounts[roleLabel] += 1;
+            food.setScale(basket.scale);
             food.x = basket.x + this.getBasketFoodOffset(pilePosition, basket.scale).x;
             food.y = basket.y + this.getBasketFoodOffset(pilePosition, basket.scale).y;
         });
