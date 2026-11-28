@@ -91,6 +91,8 @@ export default class Start extends Phaser.Scene {
             cooperationCompetitionChoice: null,
             respondentDecile: respondentDecile,
             respondentRole: null,
+            assignedPositionEqualVsOriginal: null,
+            assignedPositionEqualVsOriginalOrder: null,
             selfInterestRoleAssignmentSource: 'random',
             respondentRoleRevealed: false,
             selfInterestCondition: null,
@@ -2427,11 +2429,108 @@ export default class Start extends Phaser.Scene {
                     startedAt: this.allocationStartedAt
                 };
                 this.allocationStage = 'submitted';
-                this.showManipulationCheck();
+                this.showAssignedPositionComparison();
             }
         });
 
         ;
+    }
+    showAssignedPositionComparison() {
+        this.enterRecordedScreen('showAssignedPositionComparison');
+        this.clearQuestionScreen();
+        this.clearGameObjects();
+        const role = this.gameData.respondentRole;
+        if (!['Person A', 'Person B', 'Person C'].includes(role)) {
+            throw new Error('The assigned person is missing from the final comparison.');
+        }
+        const fixed = this.getFixedFoodCounts();
+        const equalAmount = fixed.total / 3;
+        const original = [fixed.personA, fixed.personB, fixed.personC];
+        const options = [
+            { code: 'original', label: 'Keep the food each person collected', amounts: original },
+            { code: 'equal', label: 'Divide the food equally', amounts: [equalAmount, equalAmount, equalAmount] }
+        ];
+        const variableName = 'assignedPositionEqualVsOriginal';
+        let labels = Phaser.Utils.Array.Shuffle(options.map(option => option.label));
+        labels = this.getStableAnswerOrder(variableName, labels);
+        const order = labels.map(label => options.find(option => option.label === label));
+        this.gameData.assignedPositionEqualVsOriginalOrder = order.map(option => option.code);
+        const addNative = object => {
+            if (this.phonePortrait) object._portraitPositioned = true;
+            return this.addQuestionObject(object);
+        };
+        const title = this.add.text(this.phonePortrait ? 445 : 640, this.phonePortrait ? 18 : 20,
+            `You are ${role}. If these were the only two options, which would you choose?`, {
+                fontSize: this.phonePortrait ? '29px' : '27px', color: '#000000', align: 'center',
+                wordWrap: {width: this.phonePortrait ? 460 : 940}
+            }).setOrigin(0.5, 0);
+        addNative(title);
+        addNative(this.add.text(this.phonePortrait ? 360 : 640, this.phonePortrait ? 145 : 118,
+            'Each person needs at least 8 pieces of food to survive.', {
+                fontSize: this.phonePortrait ? '25px' : '21px', color: '#000000', align: 'center',
+                wordWrap: {width: this.phonePortrait ? 650 : 1100}
+            }).setOrigin(0.5));
+        const people = [
+            {label: 'Person A', color: 3381606},
+            {label: 'Person B', color: 3368652},
+            {label: 'Person C', color: 13382451}
+        ];
+        const cardWidth = this.phonePortrait ? 660 : 590;
+        const cardHeight = this.phonePortrait ? 456 : 455;
+        const cards = [];
+        order.forEach((option, cardIndex) => {
+            const x = this.phonePortrait ? 360 : (cardIndex === 0 ? 325 : 955);
+            const y = this.phonePortrait ? (cardIndex === 0 ? 410 : 900) : 405;
+            const card = this.add.rectangle(x, y, cardWidth, cardHeight, 0xffffff)
+                .setStrokeStyle(this.gameData[variableName] === option.code ? 5 : 2, 0x263238)
+                .setInteractive({useHandCursor: true});
+            addNative(card);
+            cards.push(card);
+            this.recordDisplayedAnswer(variableName, option.code, option.label);
+            addNative(this.add.text(x, y - cardHeight / 2 + 27, option.label, {
+                fontSize: this.phonePortrait ? '28px' : '23px', color: '#000000', align: 'center',
+                wordWrap: {width: cardWidth - 40}
+            }).setOrigin(0.5, 0));
+            const avatarY = y - 25;
+            const offset = this.phonePortrait ? 195 : 180;
+            people.forEach((person, index) => {
+                const px = x + (index - 1) * offset;
+                if (person.label === role) {
+                    addNative(this.add.text(px, avatarY - 103, 'YOU', {
+                        fontSize: this.phonePortrait ? '26px' : '20px', color: '#166534'
+                    }).setOrigin(0.5));
+                }
+                // Reuse the task's familiar person, basket, fruit and eight-piece line.
+                // Scale the whole illustration, so baskets remain proportional.
+                const avatar = this.createStaticHumanAvatar(px, avatarY, person.label, 1, person.color, 0, false);
+                avatar.removeAt(11, true);
+                avatar.addAt(this.createBasketHoldingArm(1, 11893327), 11);
+                const basketX = this.getBasketAnchorX(1);
+                const basketScale = this.getBasketScale(1);
+                avatar.add(this.createBasket(basketX, 31, basketScale));
+                avatar.add(this.createBasketGrip(1, 11893327));
+                for (let fruit = 0; fruit < option.amounts[index]; fruit += 1) {
+                    const p = this.getBasketFoodOffset(fruit, 1, option.amounts[index]);
+                    avatar.add(this.createFoodFruit(basketX + p.x, 31 + p.y, this.basketFruitScale(1)));
+                }
+                avatar.add(this.createBasketThresholdMarker(basketX, 31, basketScale));
+                avatar.setScale(this.phonePortrait ? 0.9 : 0.8);
+                addNative(avatar);
+                const amount = option.amounts[index];
+                addNative(this.add.text(px, avatarY + (this.phonePortrait ? 153 : 137),
+                    `${amount} ${amount === 1 ? 'piece' : 'pieces'}`, {
+                        fontSize: this.phonePortrait ? '25px' : '20px', color: '#000000'
+                    }).setOrigin(0.5));
+            });
+            addNative(this.add.text(x, y + cardHeight / 2 - 30, 'Select this option', {
+                fontSize: this.phonePortrait ? '25px' : '20px', color: '#263238'
+            }).setOrigin(0.5));
+            card.on('pointerdown', () => {
+                cards.forEach(button => button.disableInteractive());
+                this.gameData[variableName] = option.code;
+                this.showManipulationCheck();
+            });
+        });
     }
     getSelfInterestMoveInstruction() {
         const size = this.selfInterestMoveSize || 1;
@@ -2742,7 +2841,9 @@ export default class Start extends Phaser.Scene {
     }
     buildQualtricsBackupSummary() {
         const essential = [
-            'gameId', 'qualtricsId', 'condition', 'gameVersion', 'gameStartTime', 'gameEndTime',
+            'gameId', 'qualtricsId', 'condition', 'gameVersion',
+            'respondentRole', 'assignedPositionEqualVsOriginal', 'assignedPositionEqualVsOriginalOrder',
+            'gameStartTime', 'gameEndTime',
             'totalDurationMs', 'submissionId', 'saveStatus', 'saveAcknowledged', 'saveConfirmationSource',
             'sessionBackupStored', 'thresholdCheckChoice', 'thresholdCheckPassed', 'survivalCheck',
             'redistributionFeasibility', 'manipulationCheckChoice', 'manipulationCheckPassed',
@@ -2750,7 +2851,7 @@ export default class Start extends Phaser.Scene {
             'partialRedistributionPreference', 'socialContractGuarantee', 'personalVsGroupResponsibility',
             'fairRuleChoice', 'foodPriorityChoice', 'workBreakChoice', 'floodPreparationChoice',
             'personDShareChoice', 'personDEmpathyChoice', 'cooperationCompetitionChoice',
-            'respondentDecile', 'respondentRole', 'respondentRoleRevealed', 'selfInterestRoleAssignmentSource',
+            'respondentDecile', 'respondentRoleRevealed', 'selfInterestRoleAssignmentSource',
             'selfInterestCondition', 'selfInterestConditionIssue', 'freeAllocationFinal', 'freeAllocationGini', 'freeAllocationSurvivors',
             'freeAllocationTotalMoved', 'freeAllocationDurationMs', 'equalDivisionFinal',
             'equalDivisionOutcomeChoice', 'equalDivisionOutcomePassed', 'partialRedistributionFinal',

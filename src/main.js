@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261123-survival-proportion-refine-v2-phone-back-20261123-v1';
+import Start from './scenes/Start.js?v=20261127-survival-assigned-position-choice-v1';
 
 console.log('START IMPORTED:', Start);
 
