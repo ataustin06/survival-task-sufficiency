@@ -2496,6 +2496,13 @@ export default class Start extends Phaser.Scene {
             people.forEach((person, index) => {
                 const px = x + (index - 1) * offset;
                 if (person.label === role) {
+                    // This outline identifies the assigned person, not an answer.
+                    // It is deliberately noninteractive so the whole card remains clickable.
+                    const highlight = this.add.rectangle(
+                        px + 24, avatarY + 5, 144, this.phonePortrait ? 190 : 180,
+                        0xffffff, 0
+                    ).setStrokeStyle(4, 0x166534).setName('assignedPositionHighlight');
+                    addNative(highlight);
                     addNative(this.add.text(px, avatarY - 103, 'YOU', {
                         fontSize: this.phonePortrait ? '26px' : '20px', color: '#166534'
                     }).setOrigin(0.5));

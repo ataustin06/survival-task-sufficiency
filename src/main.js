@@ -1,6 +1,6 @@
 console.log('MAIN.JS LOADED');
 
-import Start from './scenes/Start.js?v=20261127-survival-assigned-position-choice-v1';
+import Start from './scenes/Start.js?v=20261127-survival-assigned-position-highlight-v2';
 
 console.log('START IMPORTED:', Start);
 
